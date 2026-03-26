@@ -22,19 +22,25 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
           ? "職務経歴書"
           : "自己PR";
 
-      const now = new Date();
-      const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-
-      // マークダウンをHTMLに簡易変換
+      // マークダウンをHTMLに変換（提出用フォーマット）
       const htmlContent = result
         .replace(/<!--.*?-->/gs, "")
-        .replace(/^### (.+)$/gm, '<h3 style="font-size:15px;color:#1a365d;margin:18px 0 8px;font-weight:bold;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2 style="font-size:17px;color:#1a365d;margin:22px 0 10px;font-weight:bold;border-bottom:2px solid #1a365d;padding-bottom:6px;">$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1 style="font-size:20px;color:#1a365d;margin:24px 0 12px;font-weight:bold;">$1</h1>')
+        // 末尾の改善ポイント解説などを除去（リライトモードの場合）
+        .replace(/---\s*\n[\s\S]*?改善ポイント[\s\S]*$/gm, "")
+        .replace(/---\s*\n[\s\S]*?補足[\s\S]*$/gm, "")
+        // 見出し変換
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // 太字・斜体
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
-        .replace(/^- (.+)$/gm, '<li style="margin-left:20px;margin-bottom:4px;">$1</li>')
-        .replace(/\n\n/g, '<br style="margin-bottom:12px;">')
+        // リスト（箇条書き）
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        // テーブル除去（添削モード用スコアテーブルなど）
+        .replace(/\|.*\|/g, "")
+        // 改行処理
+        .replace(/\n\n/g, '</p><p>')
         .replace(/\n/g, "<br>");
 
       // 印刷用ウィンドウを開く
@@ -49,77 +55,150 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
         <html lang="ja">
         <head>
           <meta charset="utf-8">
-          <title>${modeLabel} - ${settings.name}</title>
+          <title>${modeLabel}</title>
           <style>
+            @page {
+              size: A4;
+              margin: 18mm 20mm 18mm 20mm;
+            }
             @media print {
-              body { margin: 0; }
+              body { margin: 0; padding: 0; }
               .no-print { display: none !important; }
+              .page-header { position: running(header); }
             }
+            * { box-sizing: border-box; }
             body {
-              font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
-              font-size: 14px;
-              line-height: 1.8;
-              color: #2d3748;
-              max-width: 780px;
-              margin: 0 auto;
-              padding: 40px;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 3px solid #1a365d;
-              padding-bottom: 16px;
-              margin-bottom: 28px;
-            }
-            .header h1 {
-              font-size: 24px;
-              color: #1a365d;
-              margin: 0 0 8px;
-            }
-            .header p {
-              font-size: 13px;
-              color: #718096;
+              font-family: "Yu Mincho", "Hiragino Mincho ProN", "MS PMincho", serif;
+              font-size: 10.5pt;
+              line-height: 1.65;
+              color: #1a1a1a;
               margin: 0;
+              padding: 20px 24px;
             }
-            .content {
-              font-size: 14px;
-            }
-            .footer {
+
+            /* タイトル */
+            .doc-title {
               text-align: center;
-              font-size: 11px;
-              color: #718096;
-              border-top: 1px solid #e2e8f0;
-              padding-top: 16px;
-              margin-top: 40px;
+              font-size: 16pt;
+              font-weight: bold;
+              letter-spacing: 4px;
+              margin: 0 0 6px;
+              padding: 0;
+            }
+            .doc-date {
+              text-align: right;
+              font-size: 9pt;
+              color: #444;
+              margin: 0 0 2px;
+            }
+            .doc-name {
+              text-align: right;
+              font-size: 10.5pt;
+              margin: 0 0 14px;
+            }
+
+            /* セクション見出し */
+            h1 {
+              font-size: 12pt;
+              font-weight: bold;
+              border-bottom: 2px solid #333;
+              padding: 0 0 3px;
+              margin: 16px 0 8px;
+              page-break-after: avoid;
+            }
+            h2 {
+              font-size: 11pt;
+              font-weight: bold;
+              border-left: 4px solid #333;
+              padding: 1px 0 1px 8px;
+              margin: 12px 0 6px;
+              page-break-after: avoid;
+            }
+            h3 {
+              font-size: 10.5pt;
+              font-weight: bold;
+              margin: 10px 0 4px;
+              page-break-after: avoid;
+            }
+
+            /* 本文 */
+            p {
+              margin: 0 0 6px;
+              text-align: justify;
+            }
+
+            /* リスト */
+            li {
+              margin: 0 0 2px;
+              padding-left: 16px;
+              list-style: none;
+              text-indent: -12px;
+            }
+            li::before {
+              content: "・";
+            }
+
+            /* 太字 */
+            strong {
+              font-weight: bold;
+            }
+
+            /* 職務経歴ブロック：途中でページを変えない */
+            .job-block {
+              page-break-inside: avoid;
+            }
+
+            /* 区切り線 */
+            hr {
+              border: none;
+              border-top: 1px solid #ccc;
+              margin: 10px 0;
+            }
+
+            /* 印刷ボタン */
+            .print-controls {
+              text-align: center;
+              padding: 16px;
+              margin-bottom: 20px;
+              background: #f0f4f8;
+              border-radius: 8px;
             }
             .print-btn {
-              display: block;
-              margin: 20px auto;
-              padding: 14px 40px;
-              font-size: 16px;
+              padding: 12px 36px;
+              font-size: 15px;
               font-weight: bold;
               color: white;
               background: #1a365d;
               border: none;
-              border-radius: 8px;
+              border-radius: 6px;
               cursor: pointer;
+              margin: 4px;
             }
             .print-btn:hover { opacity: 0.9; }
-            strong { color: #1a365d; }
+            .print-hint {
+              font-size: 12px;
+              color: #666;
+              margin-top: 8px;
+            }
           </style>
         </head>
         <body>
-          <button class="print-btn no-print" onclick="window.print()">
-            📄 PDFとして保存（印刷ダイアログで「PDFに保存」を選択）
-          </button>
-          <div class="header">
-            <h1>${modeLabel}</h1>
-            <p>${dateStr} ｜ ${settings.name} ｜ キャリアクラフト</p>
+          <div class="print-controls no-print">
+            <button class="print-btn" onclick="window.print()">
+              PDFとして保存
+            </button>
+            <div class="print-hint">
+              印刷ダイアログで「送信先：PDFに保存」を選択してください<br>
+              余白：「なし」または「最小」推奨
+            </div>
           </div>
+
+          <p class="doc-title">職 務 経 歴 書</p>
+          <p class="doc-date">${new Date().getFullYear()}年${new Date().getMonth() + 1}月${new Date().getDate()}日 現在</p>
+          <p class="doc-name">${settings.name || ""}</p>
+
           <div class="content">
-            ${htmlContent}
-          </div>
-          <div class="footer">
-            キャリアクラフト — AI × 転職支援20年以上の知見で職務経歴書を戦略的に最適化
+            <p>${htmlContent}</p>
           </div>
         </body>
         </html>
