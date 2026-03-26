@@ -10,7 +10,7 @@ export default function Home() {
             <span className="text-xl font-black text-navy">キャリアクラフト</span>
           </div>
           <Link href="/app" className="bg-gradient-to-r from-navy to-navy-light text-white px-5 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all">
-            無料で始める
+            受講生専用ツール
           </Link>
         </div>
       </header>
@@ -26,7 +26,7 @@ export default function Home() {
             40代・50代専門の職務経歴書 添削・リライト AIツール
           </p>
           <Link href="/app" className="inline-block bg-gradient-to-r from-gold to-gold-light text-white px-10 py-4 rounded-xl font-black text-lg shadow-lg hover:shadow-xl hover:brightness-110 transition-all">
-            無料で始める →
+            添削を始める →
           </Link>
         </div>
       </section>
