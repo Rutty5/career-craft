@@ -6,6 +6,7 @@ import { parseScores, removeScoresComment } from "@/lib/score-parser";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import RadarChart from "@/components/RadarChart";
 import PdfExporter from "@/components/PdfExporter";
+import PptxExporter from "@/components/PptxExporter";
 import Button from "@/components/ui/Button";
 
 interface StepResultProps {
@@ -118,6 +119,9 @@ export default function StepResult({
             {copied ? "✓ コピーしました" : "テキストコピー"}
           </Button>
           <PdfExporter result={cleanResult} settings={settings} />
+          {settings.mode === "rewrite" && (
+            <PptxExporter result={cleanResult} settings={settings} />
+          )}
           <Button variant="secondary" onClick={onBack}>
             設定を変えて再実行
           </Button>
