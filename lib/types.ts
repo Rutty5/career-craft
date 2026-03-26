@@ -142,4 +142,5 @@ export interface PresentationData {
 export interface PresentationRequest {
   resumeText: string;
   settings: UserSettings;
+  jobDescription?: string;
 }

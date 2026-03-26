@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { UserSettings } from "@/lib/types";
+import type { UserSettings, AppInput } from "@/lib/types";
 import { parseScores, removeScoresComment } from "@/lib/score-parser";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import RadarChart from "@/components/RadarChart";
@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 
 interface StepResultProps {
   settings: UserSettings;
+  input: AppInput;
   result: string;
   loading: boolean;
   error: string;
@@ -21,6 +22,7 @@ interface StepResultProps {
 
 export default function StepResult({
   settings,
+  input,
   result,
   loading,
   error,
@@ -120,7 +122,7 @@ export default function StepResult({
           </Button>
           <PdfExporter result={cleanResult} settings={settings} />
           {settings.mode === "rewrite" && (
-            <PptxExporter result={cleanResult} settings={settings} />
+            <PptxExporter result={cleanResult} settings={settings} extraInfo={input.extraInfo} />
           )}
           <Button variant="secondary" onClick={onBack}>
             設定を変えて再実行

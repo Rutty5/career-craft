@@ -7,9 +7,10 @@ import Button from "@/components/ui/Button";
 interface PptxExporterProps {
   result: string;
   settings: UserSettings;
+  extraInfo?: string;
 }
 
-export default function PptxExporter({ result, settings }: PptxExporterProps) {
+export default function PptxExporter({ result, settings, extraInfo }: PptxExporterProps) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +22,7 @@ export default function PptxExporter({ result, settings }: PptxExporterProps) {
       const response = await fetch("/api/presentation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeText: result, settings }),
+        body: JSON.stringify({ resumeText: result, settings, jobDescription: extraInfo || "" }),
       });
 
       if (!response.ok) {

@@ -157,6 +157,7 @@ export default function AppPage() {
           {step === 2 && (
             <StepResult
               settings={settings}
+              input={input}
               result={result}
               loading={loading}
               error={error}

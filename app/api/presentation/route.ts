@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { resumeText, settings } = body;
+  const { resumeText, settings, jobDescription } = body;
 
   if (!resumeText || !settings) {
     return Response.json(
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { system, user } = buildPresentationPrompt(settings, resumeText);
+  const { system, user } = buildPresentationPrompt(settings, resumeText, jobDescription || "");
 
   try {
     const anthropicResponse = await fetch(

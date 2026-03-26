@@ -2,7 +2,8 @@ import type { UserSettings } from "./types";
 
 export function buildPresentationPrompt(
   settings: UserSettings,
-  resumeText: string
+  resumeText: string,
+  jobDescription?: string
 ): { system: string; user: string } {
   const system = `あなたはプロのキャリアコンサルタント兼マーケティング専門家です。
 求職者の職務経歴書を、採用担当者の心を掴む「プレゼンテーション資料」に変換します。
@@ -15,6 +16,14 @@ export function buildPresentationPrompt(
 - 元テキストに存在しない実績や数字を捏造しない
 - 出力はJSON形式のみ（説明文不要）
 - スカスカは絶対NG。各スライドに十分な情報量を詰め込む
+
+## 求人票がある場合の最重要ルール
+求人票が提供されている場合、プレゼンシートは**その求人企業の採用担当者に向けたPR資料**として作成する。
+- スキル転用（skillTransfer）は、求人票に記載された「求める人材像」「必要スキル」「業務内容」に直接対応させる
+- acquiredSkill / skillDetail は、求人票の要件に刺さる表現に変換する
+- スキルタグは求人票で使われている言葉に合わせる
+- キャリアビジョンはその企業でのキャリアパスを意識した内容にする
+- キャッチコピー（subtitle）にも応募先企業を意識した表現を入れる
 
 ## スライド構成（必ずこの2枚構成）
 
@@ -83,6 +92,10 @@ export function buildPresentationPrompt(
 
 JSONのみを出力してください。`;
 
+  const jobSection = jobDescription
+    ? `\n\n【求人票・応募先情報】\n以下の求人に応募するためのPRプレゼンシートを作成してください。求人票の要件に合わせてスキル転用やPRポイントを最適化すること。\n${jobDescription}`
+    : "";
+
   const user = `以下の職務経歴書をプレゼンテーション用スライドデータに変換してください。
 
 対象者: ${settings.name}
@@ -91,7 +104,7 @@ JSONのみを出力してください。`;
 転職タイプ: ${settings.transferType}
 
 【職務経歴書テキスト】
-${resumeText}`;
+${resumeText}${jobSection}`;
 
   return { system, user };
 }
