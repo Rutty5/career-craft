@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-navy: #1a365d;
+  --color-navy-light: #2c5282;
+  --color-gold: #c7924e;
+  --color-gold-light: #e8c88a;
+  --color-warm-bg: #f7f5f0;
+  --color-warm-card: #ffffff;
+  --color-text-main: #2d3748;
+  --color-text-light: #718096;
+  --color-success: #276749;
+  --color-error: #c53030;
+  --font-sans: "Noto Sans JP", sans-serif;
+}
+
+body {
+  background: var(--color-warm-bg);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  animation: pulse-dot 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0s; }
