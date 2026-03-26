@@ -10,7 +10,7 @@ export default function Home() {
             <span className="text-xl font-black text-navy">キャリアクラフト</span>
           </div>
           <Link href="/app" className="bg-gradient-to-r from-navy to-navy-light text-white px-5 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all">
-            受講生専用ツール
+            ツールを使う
           </Link>
         </div>
       </header>
