@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     );
 
     const stream = client.messages.stream({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
@@ -73,8 +73,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("Generate API error detail:", errMsg);
     return Response.json(
-      { error: "サーバーエラーが発生しました。再度お試しください。" },
+      { error: `サーバーエラー: ${errMsg}` },
       { status: 500 }
     );
   }
