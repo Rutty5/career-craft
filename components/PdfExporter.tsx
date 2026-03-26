@@ -12,90 +12,9 @@ interface PdfExporterProps {
 export default function PdfExporter({ result, settings }: PdfExporterProps) {
   const [generating, setGenerating] = useState(false);
 
-  const handleExport = async () => {
+  const handleExport = () => {
     setGenerating(true);
     try {
-      // 動的インポートで@react-pdf/rendererを読み込み
-      const { Document, Page, Text, View, StyleSheet, Font, pdf } =
-        await import("@react-pdf/renderer");
-
-      // フォント登録（Google Fonts CDN - Noto Sans JP）
-      Font.register({
-        family: "NotoSansJP",
-        fonts: [
-          {
-            src: "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.ttf",
-            fontWeight: 400,
-          },
-          {
-            src: "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-700-normal.ttf",
-            fontWeight: 700,
-          },
-        ],
-      });
-
-      // ハイフネーション無効化（日本語対応）
-      Font.registerHyphenationCallback((word: string) => [word]);
-
-      const styles = StyleSheet.create({
-        page: {
-          fontFamily: "NotoSansJP",
-          fontSize: 10,
-          padding: 56, // ~20mm
-          color: "#2d3748",
-          lineHeight: 1.6,
-        },
-        header: {
-          textAlign: "center",
-          marginBottom: 20,
-          paddingBottom: 12,
-          borderBottomWidth: 2,
-          borderBottomColor: "#1a365d",
-        },
-        title: {
-          fontSize: 18,
-          fontWeight: 700,
-          color: "#1a365d",
-          marginBottom: 8,
-        },
-        subtitle: {
-          fontSize: 9,
-          color: "#718096",
-        },
-        section: {
-          marginBottom: 12,
-        },
-        sectionTitle: {
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#1a365d",
-          marginBottom: 6,
-          paddingBottom: 3,
-          borderBottomWidth: 1,
-          borderBottomColor: "#e2e8f0",
-        },
-        text: {
-          fontSize: 10,
-          lineHeight: 1.6,
-          marginBottom: 4,
-        },
-        footer: {
-          position: "absolute",
-          bottom: 30,
-          left: 56,
-          right: 56,
-          textAlign: "center",
-          fontSize: 8,
-          color: "#718096",
-        },
-      });
-
-      // マークダウンをセクションに分割
-      const sections = result
-        .replace(/<!--.*?-->/gs, "")
-        .split(/^#{1,3}\s+/m)
-        .filter((s) => s.trim());
-
       const modeLabel =
         settings.mode === "review"
           ? "添削レポート"
@@ -106,55 +25,106 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
       const now = new Date();
       const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
 
-      const PdfDoc = () => (
-        <Document>
-          <Page size="A4" style={styles.page}>
-            <View style={styles.header}>
-              <Text style={styles.title}>{modeLabel}</Text>
-              <Text style={styles.subtitle}>
-                {dateStr} | {settings.name} | キャリアクラフト
-              </Text>
-            </View>
+      // マークダウンをHTMLに簡易変換
+      const htmlContent = result
+        .replace(/<!--.*?-->/gs, "")
+        .replace(/^### (.+)$/gm, '<h3 style="font-size:15px;color:#1a365d;margin:18px 0 8px;font-weight:bold;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2 style="font-size:17px;color:#1a365d;margin:22px 0 10px;font-weight:bold;border-bottom:2px solid #1a365d;padding-bottom:6px;">$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1 style="font-size:20px;color:#1a365d;margin:24px 0 12px;font-weight:bold;">$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        .replace(/^- (.+)$/gm, '<li style="margin-left:20px;margin-bottom:4px;">$1</li>')
+        .replace(/\n\n/g, '<br style="margin-bottom:12px;">')
+        .replace(/\n/g, "<br>");
 
-            {sections.map((section, i) => {
-              const lines = section.split("\n");
-              const title = lines[0]?.trim();
-              const body = lines
-                .slice(1)
-                .join("\n")
-                .replace(/\*\*/g, "")
-                .replace(/\*/g, "")
-                .replace(/`/g, "")
-                .trim();
+      // 印刷用ウィンドウを開く
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        alert("ポップアップがブロックされました。ポップアップを許可してください。");
+        return;
+      }
 
-              return (
-                <View key={i} style={styles.section}>
-                  {title && <Text style={styles.sectionTitle}>{title}</Text>}
-                  {body && <Text style={styles.text}>{body}</Text>}
-                </View>
-              );
-            })}
-
-            <Text
-              style={styles.footer}
-              render={({ pageNumber, totalPages }) =>
-                `${pageNumber} / ${totalPages} — キャリアクラフト`
-              }
-              fixed
-            />
-          </Page>
-        </Document>
-      );
-
-      const blob = await pdf(<PdfDoc />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${modeLabel}_${settings.name}_${dateStr}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="ja">
+        <head>
+          <meta charset="utf-8">
+          <title>${modeLabel} - ${settings.name}</title>
+          <style>
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none !important; }
+            }
+            body {
+              font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+              font-size: 14px;
+              line-height: 1.8;
+              color: #2d3748;
+              max-width: 780px;
+              margin: 0 auto;
+              padding: 40px;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 3px solid #1a365d;
+              padding-bottom: 16px;
+              margin-bottom: 28px;
+            }
+            .header h1 {
+              font-size: 24px;
+              color: #1a365d;
+              margin: 0 0 8px;
+            }
+            .header p {
+              font-size: 13px;
+              color: #718096;
+              margin: 0;
+            }
+            .content {
+              font-size: 14px;
+            }
+            .footer {
+              text-align: center;
+              font-size: 11px;
+              color: #718096;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 16px;
+              margin-top: 40px;
+            }
+            .print-btn {
+              display: block;
+              margin: 20px auto;
+              padding: 14px 40px;
+              font-size: 16px;
+              font-weight: bold;
+              color: white;
+              background: #1a365d;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+            }
+            .print-btn:hover { opacity: 0.9; }
+            strong { color: #1a365d; }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn no-print" onclick="window.print()">
+            📄 PDFとして保存（印刷ダイアログで「PDFに保存」を選択）
+          </button>
+          <div class="header">
+            <h1>${modeLabel}</h1>
+            <p>${dateStr} ｜ ${settings.name} ｜ キャリアクラフト</p>
+          </div>
+          <div class="content">
+            ${htmlContent}
+          </div>
+          <div class="footer">
+            キャリアクラフト — AI × 転職支援20年以上の知見で職務経歴書を戦略的に最適化
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     } catch (err) {
       console.error("PDF generation error:", err);
       alert("PDF生成に失敗しました。テキストコピーをご利用ください。");
@@ -165,7 +135,7 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
 
   return (
     <Button variant="secondary" onClick={handleExport} disabled={generating}>
-      {generating ? "PDF生成中..." : "PDFダウンロード"}
+      {generating ? "準備中..." : "PDF保存"}
     </Button>
   );
 }
