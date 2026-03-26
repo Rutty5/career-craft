@@ -16,14 +16,34 @@ const C = {
   text: "2D3748",
   textLight: "718096",
   grayBg: "EDF2F7",
+  grayBorder: "CBD5E0",
+  tagOrange: "ED8936",
+  tagGreen: "38A169",
+  tagBlue: "3182CE",
+  tagPurple: "805AD5",
+  tagRed: "E53E3E",
+  tagTeal: "319795",
 };
 
 const FONT = "Meiryo";
-const SLIDE_W = 10; // inches (16:9)
-const CONTENT_LEFT = 0.6;
-const CONTENT_RIGHT = 0.6;
-const CONTENT_W = SLIDE_W - CONTENT_LEFT - CONTENT_RIGHT;
-const HEADER_H = 0.65;
+const SLIDE_W = 10;
+const HEADER_H = 0.55;
+const CL = 0.4;
+const CW = SLIDE_W - CL * 2;
+
+const INDUSTRY_COLORS: Record<string, string> = {
+  "製造": C.tagOrange, "IT": C.tagBlue, "IT運用": C.tagBlue,
+  "小売": C.tagGreen, "介護": C.tagPurple, "金融": C.tagRed,
+  "医療": C.tagPurple, "コンサル": C.tagTeal, "教育": C.tagGreen,
+  "サービス": C.tagOrange, "不動産": C.tagRed, "広告": C.tagTeal,
+};
+
+function getIndustryColor(industry: string): string {
+  for (const [key, color] of Object.entries(INDUSTRY_COLORS)) {
+    if (industry.includes(key)) return color;
+  }
+  return C.navyLight;
+}
 
 export async function generatePptx(data: PresentationData): Promise<void> {
   const pptx = new PptxGenJS();
@@ -31,16 +51,13 @@ export async function generatePptx(data: PresentationData): Promise<void> {
   pptx.author = "キャリアクラフト";
   pptx.subject = "職務経歴プレゼンシート";
 
-  // カバースライド
   renderCoverSlide(pptx, data);
-
-  // コンテンツスライド
   for (const slideData of data.slides) {
     renderContentSlide(pptx, slideData);
   }
 
   await pptx.writeFile({
-    fileName: `プレゼンシート_${data.coverSubtitle || "職務経歴"}.pptx`,
+    fileName: "プレゼンシート_" + (data.coverSubtitle || "職務経歴") + ".pptx",
   });
 }
 
@@ -48,552 +65,356 @@ function renderCoverSlide(pptx: PptxGenJS, data: PresentationData) {
   const slide = pptx.addSlide();
   slide.background = { color: C.navy };
 
-  // ゴールドアクセントライン（上部）
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 0,
-    y: 1.8,
-    w: SLIDE_W,
-    h: 0.04,
-    fill: { color: C.gold },
-  });
+  slide.addShape(pptx.ShapeType.rect, { x: 0, y: 1.8, w: SLIDE_W, h: 0.04, fill: { color: C.gold } });
 
-  // タイトル
   slide.addText(data.coverTitle || "職務経歴プレゼンテーション", {
-    x: 0.5,
-    y: 2.1,
-    w: 9,
-    h: 1.0,
-    fontSize: 32,
-    fontFace: FONT,
-    color: C.white,
-    bold: true,
-    align: "center",
+    x: 0.5, y: 2.1, w: 9, h: 1.0,
+    fontSize: 32, fontFace: FONT, color: C.white, bold: true, align: "center",
   });
 
-  // 名前
   slide.addText(data.coverSubtitle || "", {
-    x: 0.5,
-    y: 3.2,
-    w: 9,
-    h: 0.6,
-    fontSize: 20,
-    fontFace: FONT,
-    color: C.gold,
-    align: "center",
+    x: 0.5, y: 3.2, w: 9, h: 0.6,
+    fontSize: 20, fontFace: FONT, color: C.gold, align: "center",
   });
 
-  // 日付
   const now = new Date();
-  const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+  const dateStr = now.getFullYear() + "年" + (now.getMonth() + 1) + "月";
   slide.addText(dateStr, {
-    x: 0.5,
-    y: 4.0,
-    w: 9,
-    h: 0.4,
-    fontSize: 12,
-    fontFace: FONT,
-    color: C.textLight,
-    align: "center",
+    x: 0.5, y: 4.0, w: 9, h: 0.4,
+    fontSize: 12, fontFace: FONT, color: C.textLight, align: "center",
   });
 
-  // ゴールドアクセントライン（下部）
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 3.0,
-    y: 4.6,
-    w: 4.0,
-    h: 0.03,
-    fill: { color: C.gold },
-  });
-
-  // フッター
-  slide.addText("Powered by キャリアクラフト", {
-    x: 0.5,
-    y: 5.1,
-    w: 9,
-    h: 0.3,
-    fontSize: 9,
-    fontFace: FONT,
-    color: C.textLight,
-    align: "center",
-  });
+  slide.addShape(pptx.ShapeType.rect, { x: 3.0, y: 4.6, w: 4.0, h: 0.03, fill: { color: C.gold } });
 }
 
 function renderContentSlide(pptx: PptxGenJS, slideData: SlideData) {
   const slide = pptx.addSlide();
   slide.background = { color: C.warmBg };
 
-  // ヘッダーバー
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 0,
-    y: 0,
-    w: SLIDE_W,
-    h: HEADER_H,
-    fill: { color: C.navy },
-  });
+  slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: SLIDE_W, h: HEADER_H, fill: { color: C.navy } });
+  slide.addShape(pptx.ShapeType.rect, { x: 0, y: HEADER_H, w: SLIDE_W, h: 0.03, fill: { color: C.gold } });
 
-  // ゴールドアクセント
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 0,
-    y: HEADER_H,
-    w: SLIDE_W,
-    h: 0.035,
-    fill: { color: C.gold },
-  });
-
-  // スライドタイトル
   slide.addText(slideData.title, {
-    x: CONTENT_LEFT,
-    y: 0.08,
-    w: CONTENT_W,
-    h: 0.5,
-    fontSize: 18,
-    fontFace: FONT,
-    color: C.white,
-    bold: true,
+    x: CL, y: 0.06, w: CW, h: 0.44,
+    fontSize: 16, fontFace: FONT, color: C.white, bold: true,
   });
 
-  // 要素をレンダリング
-  let currentY = HEADER_H + 0.3;
+  let currentY = HEADER_H + 0.15;
 
-  for (const element of slideData.elements) {
-    currentY = renderElement(pptx, slide, element, currentY, CONTENT_LEFT, CONTENT_W);
-    currentY += 0.15; // 要素間のスペース
+  if (slideData.subtitle) {
+    slide.addText(slideData.subtitle, {
+      x: CL, y: currentY, w: CW, h: 0.3,
+      fontSize: 10, fontFace: FONT, color: C.text, italic: true,
+    });
+    currentY += 0.32;
   }
 
-  // フッター
-  slide.addText("キャリアクラフト", {
-    x: CONTENT_LEFT,
-    y: 5.2,
-    w: CONTENT_W,
-    h: 0.25,
-    fontSize: 8,
-    fontFace: FONT,
-    color: C.textLight,
-  });
+  for (const element of slideData.elements) {
+    currentY = renderElement(pptx, slide, element, currentY);
+    currentY += 0.08;
+  }
 }
 
 function renderElement(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  element: SlideElement,
-  y: number,
-  x: number,
-  w: number
+  pptx: PptxGenJS, slide: PptxGenJS.Slide, element: SlideElement, y: number
 ): number {
   switch (element.type) {
-    case "title":
-      return renderTitle(slide, element, y, x, w);
+    case "metric": return renderMetrics(pptx, slide, element, y);
+    case "companyCard": return renderCompanyCards(pptx, slide, element, y);
+    case "skillTransfer": return renderSkillTransfers(pptx, slide, element, y);
+    case "careerVision": return renderCareerVision(pptx, slide, element, y);
     case "subtitle":
-      return renderSubtitle(slide, element, y, x, w);
+      slide.addText(element.text || "", {
+        x: CL, y, w: CW, h: 0.3,
+        fontSize: 11, fontFace: FONT, color: C.navyLight, bold: true,
+      });
+      return y + 0.3;
     case "text":
-      return renderText(slide, element, y, x, w);
-    case "bulletList":
-      return renderBulletList(slide, element, y, x, w);
-    case "metric":
-      return renderMetrics(pptx, slide, element, y, x, w);
-    case "timeline":
-      return renderTimeline(pptx, slide, element, y, x, w);
-    case "skillBars":
-      return renderSkillBars(pptx, slide, element, y, x, w);
-    case "iconGrid":
-      return renderIconGrid(pptx, slide, element, y, x, w);
-    case "twoColumn":
-      return renderTwoColumn(pptx, slide, element, y, x, w);
-    default:
-      return y;
+      slide.addText(element.text || "", {
+        x: CL, y, w: CW, h: 0.3,
+        fontSize: 9, fontFace: FONT, color: C.text,
+      });
+      return y + 0.3;
+    case "bulletList": return renderBulletList(slide, element, y);
+    case "skillBars": return renderSkillBars(pptx, slide, element, y);
+    case "iconGrid": return renderIconGrid(pptx, slide, element, y);
+    case "timeline": return renderTimeline(pptx, slide, element, y);
+    case "twoColumn": return renderTwoColumn(pptx, slide, element, y);
+    default: return y;
   }
 }
 
-function renderTitle(
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  slide.addText(el.text || "", {
-    x,
-    y,
-    w,
-    h: 0.45,
-    fontSize: 16,
-    fontFace: FONT,
-    color: C.navy,
-    bold: true,
-  });
-  return y + 0.45;
-}
-
-function renderSubtitle(
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  slide.addText(el.text || "", {
-    x,
-    y,
-    w,
-    h: 0.35,
-    fontSize: 13,
-    fontFace: FONT,
-    color: C.navyLight,
-    bold: true,
-  });
-  return y + 0.35;
-}
-
-function renderText(
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  const lines = Math.ceil((el.text || "").length / 50);
-  const h = Math.max(0.35, lines * 0.25);
-  slide.addText(el.text || "", {
-    x,
-    y,
-    w,
-    h,
-    fontSize: 11,
-    fontFace: FONT,
-    color: C.text,
-    lineSpacing: 18,
-  });
-  return y + h;
-}
-
-function renderBulletList(
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  const items = el.items || [];
-  const textRows = items.map((item) => ({
-    text: item,
-    options: {
-      bullet: { code: "2022" }, // bullet character
-      fontSize: 11,
-      fontFace: FONT,
-      color: C.text,
-    },
-  }));
-
-  const h = Math.max(0.4, items.length * 0.28);
-  slide.addText(textRows as PptxGenJS.TextProps[], {
-    x,
-    y,
-    w,
-    h,
-    lineSpacing: 20,
-    valign: "top",
-  });
-  return y + h;
-}
-
-function renderMetrics(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
+function renderMetrics(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
   const metrics = el.metrics || [];
   if (metrics.length === 0) return y;
-
   const count = Math.min(metrics.length, 4);
-  const itemW = w / count;
-  const cardPad = 0.1;
+  const itemW = CW / count;
+  const pad = 0.06;
 
   for (let i = 0; i < count; i++) {
     const m = metrics[i];
-    const cardX = x + i * itemW + cardPad;
-    const cardW = itemW - cardPad * 2;
+    const cx = CL + i * itemW + pad;
+    const cw = itemW - pad * 2;
 
-    // カード背景
     slide.addShape(pptx.ShapeType.roundRect, {
-      x: cardX,
-      y,
-      w: cardW,
-      h: 0.85,
-      fill: { color: C.white },
-      rectRadius: 0.05,
-      shadow: {
-        type: "outer",
-        blur: 3,
-        offset: 1,
-        color: "000000",
-        opacity: 0.1,
-      },
+      x: cx, y, w: cw, h: 0.62,
+      fill: { color: C.white }, line: { color: C.grayBorder, width: 0.5 }, rectRadius: 0.04,
     });
-
-    // 数値（ゴールド）
     slide.addText(m.value, {
-      x: cardX,
-      y: y + 0.08,
-      w: cardW,
-      h: 0.42,
-      fontSize: 22,
-      fontFace: FONT,
-      color: C.gold,
-      bold: true,
-      align: "center",
+      x: cx, y: y + 0.04, w: cw, h: 0.32,
+      fontSize: 18, fontFace: FONT, color: C.navy, bold: true, align: "center",
     });
-
-    // ラベル
     slide.addText(m.label, {
-      x: cardX,
-      y: y + 0.48,
-      w: cardW,
-      h: 0.3,
-      fontSize: 9,
-      fontFace: FONT,
-      color: C.textLight,
-      align: "center",
+      x: cx + 0.04, y: y + 0.34, w: cw - 0.08, h: 0.22,
+      fontSize: 7.5, fontFace: FONT, color: C.textLight, align: "center",
     });
   }
-
-  return y + 0.95;
+  return y + 0.7;
 }
 
-function renderTimeline(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  const entries = el.timeline || [];
-  if (entries.length === 0) return y;
+function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const cards = el.companyCards || [];
+  if (cards.length === 0) return y;
 
-  const entryH = 0.65;
-  const dotR = 0.06;
-  const lineX = x + 0.15;
+  const colW1 = 1.8;
+  const colW2 = 3.6;
+  const colW3 = CW - colW1 - colW2;
 
-  // 縦線
-  slide.addShape(pptx.ShapeType.rect, {
-    x: lineX - 0.015,
-    y: y + dotR,
-    w: 0.03,
-    h: (entries.length - 1) * entryH + dotR * 2,
-    fill: { color: C.gold },
+  // ヘッダー
+  slide.addShape(pptx.ShapeType.rect, { x: CL, y, w: CW, h: 0.26, fill: { color: C.navy } });
+  slide.addText("業界・規模", {
+    x: CL, y, w: colW1, h: 0.26,
+    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+  });
+  slide.addText("具体的な行動と実績", {
+    x: CL + colW1, y, w: colW2, h: 0.26,
+    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+  });
+  slide.addText("身につけた能力（採用メリット）", {
+    x: CL + colW1 + colW2, y, w: colW3, h: 0.26,
+    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
   });
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    const ey = y + i * entryH;
+  let rowY = y + 0.26;
 
-    // ドット
-    slide.addShape(pptx.ShapeType.ellipse, {
-      x: lineX - dotR,
-      y: ey,
-      w: dotR * 2,
-      h: dotR * 2,
-      fill: { color: C.navy },
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const achCount = card.achievements?.length || 1;
+    const rowH = Math.max(0.65, achCount * 0.16 + 0.32);
+    const bgColor = i % 2 === 0 ? C.white : C.grayBg;
+
+    slide.addShape(pptx.ShapeType.rect, {
+      x: CL, y: rowY, w: CW, h: rowH,
+      fill: { color: bgColor }, line: { color: C.grayBorder, width: 0.3 },
     });
 
-    // 期間
-    slide.addText(entry.period, {
-      x: lineX + 0.25,
-      y: ey - 0.05,
-      w: 2.0,
-      h: 0.22,
-      fontSize: 8,
-      fontFace: FONT,
-      color: C.textLight,
+    // 業界タグ
+    const tagColor = getIndustryColor(card.industry);
+    const tagW = Math.min(card.industry.length * 0.15 + 0.18, 1.1);
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x: CL + 0.06, y: rowY + 0.05, w: tagW, h: 0.18,
+      fill: { color: tagColor }, rectRadius: 0.03,
+    });
+    slide.addText(card.industry, {
+      x: CL + 0.06, y: rowY + 0.05, w: tagW, h: 0.18,
+      fontSize: 6.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
     });
 
-    // 会社・役職
-    slide.addText(`${entry.company}　${entry.role}`, {
-      x: lineX + 0.25,
-      y: ey + 0.13,
-      w: w - 0.5,
-      h: 0.22,
-      fontSize: 11,
-      fontFace: FONT,
-      color: C.navy,
-      bold: true,
+    // 会社名
+    slide.addText(card.company, {
+      x: CL + 0.06, y: rowY + 0.25, w: colW1 - 0.12, h: 0.16,
+      fontSize: 8.5, fontFace: FONT, color: C.navy, bold: true,
+    });
+    slide.addText(card.scale + " | " + card.period, {
+      x: CL + 0.06, y: rowY + 0.4, w: colW1 - 0.12, h: 0.14,
+      fontSize: 6.5, fontFace: FONT, color: C.textLight,
     });
 
-    // ハイライト
-    slide.addText(entry.highlight, {
-      x: lineX + 0.25,
-      y: ey + 0.33,
-      w: w - 0.5,
-      h: 0.22,
-      fontSize: 9,
-      fontFace: FONT,
-      color: C.text,
+    // 実績
+    const achText = (card.achievements || []).join("\n");
+    slide.addText(achText, {
+      x: CL + colW1 + 0.06, y: rowY + 0.05, w: colW2 - 0.12, h: rowH - 0.1,
+      fontSize: 7.5, fontFace: FONT, color: C.text, lineSpacing: 13, valign: "top",
     });
+
+    // スキル見出し
+    slide.addText(card.acquiredSkill, {
+      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.05, w: colW3 - 0.12, h: 0.16,
+      fontSize: 8, fontFace: FONT, color: C.navy, bold: true,
+    });
+    slide.addText(card.skillDetail, {
+      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.21, w: colW3 - 0.12, h: rowH - 0.48,
+      fontSize: 6.5, fontFace: FONT, color: C.text, lineSpacing: 11, valign: "top",
+    });
+
+    // タグ
+    let tagX = CL + colW1 + colW2 + 0.06;
+    const tagY2 = rowY + rowH - 0.22;
+    for (const tag of card.tags || []) {
+      const tw = tag.length * 0.11 + 0.14;
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: tagX, y: tagY2, w: tw, h: 0.16,
+        fill: { color: C.warmBg }, line: { color: C.navyLight, width: 0.5 }, rectRadius: 0.03,
+      });
+      slide.addText(tag, {
+        x: tagX, y: tagY2, w: tw, h: 0.16,
+        fontSize: 6, fontFace: FONT, color: C.navyLight, bold: true, align: "center", valign: "middle",
+      });
+      tagX += tw + 0.05;
+    }
+
+    rowY += rowH;
   }
 
-  return y + entries.length * entryH + 0.1;
+  return rowY + 0.04;
 }
 
-function renderSkillBars(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  const skills = el.skills || [];
-  if (skills.length === 0) return y;
+function renderSkillTransfers(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const transfers = el.skillTransfers || [];
+  if (transfers.length === 0) return y;
 
-  const barH = 0.2;
-  const gap = 0.12;
-  const labelW = 2.0;
-  const barMaxW = w - labelW - 0.2;
+  const cols = 2;
+  const cardW = (CW - 0.12) / cols;
+  const cardH = 0.82;
 
-  for (let i = 0; i < skills.length; i++) {
-    const skill = skills[i];
-    const sy = y + i * (barH + gap);
-    const level = Math.min(Math.max(skill.level, 1), 5);
-    const fillW = (level / 5) * barMaxW;
+  for (let i = 0; i < transfers.length; i++) {
+    const t = transfers[i];
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = CL + col * (cardW + 0.12);
+    const cy = y + row * (cardH + 0.06);
 
-    // ラベル
-    slide.addText(skill.name, {
-      x,
-      y: sy,
-      w: labelW,
-      h: barH,
-      fontSize: 10,
-      fontFace: FONT,
-      color: C.text,
-      align: "right",
-      valign: "middle",
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x: cx, y: cy, w: cardW, h: cardH,
+      fill: { color: C.white }, line: { color: C.grayBorder, width: 0.5 }, rectRadius: 0.05,
+    });
+    slide.addShape(pptx.ShapeType.rect, {
+      x: cx, y: cy + 0.05, w: 0.04, h: cardH - 0.1, fill: { color: C.gold },
     });
 
-    // バー背景
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: x + labelW + 0.15,
-      y: sy + 0.02,
-      w: barMaxW,
-      h: barH - 0.04,
-      fill: { color: C.grayBg },
-      rectRadius: 0.03,
+    slide.addText(t.icon + "  " + t.fromSkill + " → " + t.toSkill, {
+      x: cx + 0.14, y: cy + 0.06, w: cardW - 0.2, h: 0.22,
+      fontSize: 9, fontFace: FONT, color: C.navy, bold: true,
     });
-
-    // バー（ネイビーグラデ風）
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: x + labelW + 0.15,
-      y: sy + 0.02,
-      w: fillW,
-      h: barH - 0.04,
-      fill: { color: level >= 4 ? C.navy : C.navyLight },
-      rectRadius: 0.03,
+    slide.addText(t.description, {
+      x: cx + 0.14, y: cy + 0.3, w: cardW - 0.2, h: cardH - 0.38,
+      fontSize: 7, fontFace: FONT, color: C.text, lineSpacing: 11, valign: "top",
     });
   }
 
+  return y + Math.ceil(transfers.length / cols) * (cardH + 0.06);
+}
+
+function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const visions = el.careerVisions || [];
+  const certs = el.certifications || [];
+
+  if (certs.length > 0) {
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x: CL, y, w: CW, h: 0.5, fill: { color: C.navy }, rectRadius: 0.04,
+    });
+    slide.addText("定量実績・資格", {
+      x: CL + 0.12, y: y + 0.03, w: 2.0, h: 0.18,
+      fontSize: 8.5, fontFace: FONT, color: C.gold, bold: true,
+    });
+    const certText = certs.map(function(c) { return "✓  " + c; }).join("\n");
+    slide.addText(certText, {
+      x: CL + 0.12, y: y + 0.2, w: CW - 0.24, h: 0.26,
+      fontSize: 7.5, fontFace: FONT, color: C.white, lineSpacing: 12,
+    });
+    y += 0.56;
+  }
+
+  if (visions.length === 0) return y;
+
+  const phaseColors: Record<string, string> = { "短期": C.tagBlue, "中期": C.tagGreen, "長期": C.tagOrange };
+
+  for (let i = 0; i < visions.length; i++) {
+    const v = visions[i];
+    const vy = y + i * 0.48;
+    const dotColor = phaseColors[v.phase] || C.navy;
+
+    slide.addShape(pptx.ShapeType.ellipse, {
+      x: CL + 0.08, y: vy + 0.05, w: 0.12, h: 0.12, fill: { color: dotColor },
+    });
+    if (i < visions.length - 1) {
+      slide.addShape(pptx.ShapeType.rect, {
+        x: CL + 0.125, y: vy + 0.17, w: 0.025, h: 0.35, fill: { color: C.grayBorder },
+      });
+    }
+    slide.addText(v.phase + ": " + v.title, {
+      x: CL + 0.3, y: vy + 0.01, w: CW - 0.4, h: 0.2,
+      fontSize: 9, fontFace: FONT, color: C.navy, bold: true,
+    });
+    slide.addText(v.description, {
+      x: CL + 0.3, y: vy + 0.2, w: CW - 0.4, h: 0.24,
+      fontSize: 7, fontFace: FONT, color: C.text, lineSpacing: 11,
+    });
+  }
+
+  return y + visions.length * 0.48;
+}
+
+// 既存要素レンダラー（互換性）
+function renderBulletList(slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const items = el.items || [];
+  const textRows = items.map(function(item) {
+    return { text: item, options: { bullet: { code: "2022" }, fontSize: 9, fontFace: FONT, color: C.text } };
+  });
+  const h = Math.max(0.3, items.length * 0.2);
+  slide.addText(textRows as PptxGenJS.TextProps[], { x: CL, y, w: CW, h, lineSpacing: 16, valign: "top" });
+  return y + h;
+}
+
+function renderSkillBars(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const skills = el.skills || [];
+  if (skills.length === 0) return y;
+  const barH = 0.18, gap = 0.1, labelW = 1.8, barMaxW = CW - labelW - 0.2;
+  for (let i = 0; i < skills.length; i++) {
+    const s = skills[i];
+    const sy = y + i * (barH + gap);
+    const lvl = Math.min(Math.max(s.level, 1), 5);
+    slide.addText(s.name, { x: CL, y: sy, w: labelW, h: barH, fontSize: 9, fontFace: FONT, color: C.text, align: "right", valign: "middle" });
+    slide.addShape(pptx.ShapeType.roundRect, { x: CL + labelW + 0.15, y: sy + 0.02, w: barMaxW, h: barH - 0.04, fill: { color: C.grayBg }, rectRadius: 0.03 });
+    slide.addShape(pptx.ShapeType.roundRect, { x: CL + labelW + 0.15, y: sy + 0.02, w: (lvl / 5) * barMaxW, h: barH - 0.04, fill: { color: lvl >= 4 ? C.navy : C.navyLight }, rectRadius: 0.03 });
+  }
   return y + skills.length * (barH + gap);
 }
 
-function renderIconGrid(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
+function renderIconGrid(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
   const items = el.gridItems || [];
   if (items.length === 0) return y;
-
-  const cols = Math.min(items.length, 4);
-  const itemW = w / cols;
-  const cardPad = 0.08;
-
+  const cols = Math.min(items.length, 4), itemW = CW / cols, pad = 0.06;
   for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const cardX = x + col * itemW + cardPad;
-    const cardY = y + row * 1.1;
-    const cardW = itemW - cardPad * 2;
-
-    // カード背景
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: cardX,
-      y: cardY,
-      w: cardW,
-      h: 0.95,
-      fill: { color: C.white },
-      rectRadius: 0.05,
-      shadow: {
-        type: "outer",
-        blur: 2,
-        offset: 1,
-        color: "000000",
-        opacity: 0.08,
-      },
-    });
-
-    // 絵文字アイコン
-    slide.addText(item.icon, {
-      x: cardX,
-      y: cardY + 0.05,
-      w: cardW,
-      h: 0.3,
-      fontSize: 20,
-      align: "center",
-    });
-
-    // ラベル
-    slide.addText(item.label, {
-      x: cardX + 0.08,
-      y: cardY + 0.35,
-      w: cardW - 0.16,
-      h: 0.25,
-      fontSize: 10,
-      fontFace: FONT,
-      color: C.navy,
-      bold: true,
-      align: "center",
-    });
-
-    // 説明
-    slide.addText(item.description, {
-      x: cardX + 0.08,
-      y: cardY + 0.58,
-      w: cardW - 0.16,
-      h: 0.3,
-      fontSize: 8,
-      fontFace: FONT,
-      color: C.textLight,
-      align: "center",
-    });
+    const it = items[i];
+    const col = i % cols, row = Math.floor(i / cols);
+    const cx = CL + col * itemW + pad, cy = y + row * 0.8, cw = itemW - pad * 2;
+    slide.addShape(pptx.ShapeType.roundRect, { x: cx, y: cy, w: cw, h: 0.7, fill: { color: C.white }, rectRadius: 0.04 });
+    slide.addText(it.icon, { x: cx, y: cy + 0.03, w: cw, h: 0.2, fontSize: 16, align: "center" });
+    slide.addText(it.label, { x: cx + 0.04, y: cy + 0.24, w: cw - 0.08, h: 0.18, fontSize: 9, fontFace: FONT, color: C.navy, bold: true, align: "center" });
+    slide.addText(it.description, { x: cx + 0.04, y: cy + 0.42, w: cw - 0.08, h: 0.24, fontSize: 7, fontFace: FONT, color: C.textLight, align: "center" });
   }
-
-  const rows = Math.ceil(items.length / cols);
-  return y + rows * 1.1;
+  return y + Math.ceil(items.length / cols) * 0.8;
 }
 
-function renderTwoColumn(
-  pptx: PptxGenJS,
-  slide: PptxGenJS.Slide,
-  el: SlideElement,
-  y: number,
-  x: number,
-  w: number
-): number {
-  const halfW = (w - 0.3) / 2;
-  let leftEndY = y;
-  let rightEndY = y;
-
-  if (el.left) {
-    leftEndY = renderElement(pptx, slide, el.left, y, x, halfW);
+function renderTimeline(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  const entries = el.timeline || [];
+  if (entries.length === 0) return y;
+  const eH = 0.5, lx = CL + 0.15;
+  slide.addShape(pptx.ShapeType.rect, { x: lx - 0.012, y: y + 0.04, w: 0.025, h: (entries.length - 1) * eH + 0.04, fill: { color: C.gold } });
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i], ey = y + i * eH;
+    slide.addShape(pptx.ShapeType.ellipse, { x: lx - 0.04, y: ey, w: 0.08, h: 0.08, fill: { color: C.navy } });
+    slide.addText(e.period, { x: lx + 0.15, y: ey - 0.03, w: 2.0, h: 0.16, fontSize: 7, fontFace: FONT, color: C.textLight });
+    slide.addText(e.company + "　" + e.role, { x: lx + 0.15, y: ey + 0.1, w: CW - 0.4, h: 0.16, fontSize: 9, fontFace: FONT, color: C.navy, bold: true });
+    slide.addText(e.highlight, { x: lx + 0.15, y: ey + 0.25, w: CW - 0.4, h: 0.16, fontSize: 7.5, fontFace: FONT, color: C.text });
   }
-  if (el.right) {
-    rightEndY = renderElement(pptx, slide, el.right, y, x + halfW + 0.3, halfW);
-  }
+  return y + entries.length * eH;
+}
 
-  return Math.max(leftEndY, rightEndY);
+function renderTwoColumn(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
+  let ly = y, ry = y;
+  if (el.left) ly = renderElement(pptx, slide, el.left, y);
+  if (el.right) ry = renderElement(pptx, slide, el.right, y);
+  return Math.max(ly, ry);
 }

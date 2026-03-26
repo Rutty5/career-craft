@@ -59,7 +59,10 @@ export type SlideElementType =
   | "timeline"
   | "skillBars"
   | "iconGrid"
-  | "twoColumn";
+  | "twoColumn"
+  | "companyCard"
+  | "skillTransfer"
+  | "careerVision";
 
 export interface SlideMetric {
   value: string;
@@ -75,12 +78,36 @@ export interface TimelineEntry {
 
 export interface SkillBar {
   name: string;
-  level: number; // 1-5
+  level: number;
 }
 
 export interface IconGridItem {
   icon: string;
   label: string;
+  description: string;
+}
+
+export interface CompanyCardEntry {
+  industry: string;
+  company: string;
+  scale: string;
+  period: string;
+  achievements: string[];
+  acquiredSkill: string;
+  skillDetail: string;
+  tags: string[];
+}
+
+export interface SkillTransferEntry {
+  icon: string;
+  fromSkill: string;
+  toSkill: string;
+  description: string;
+}
+
+export interface CareerVisionEntry {
+  phase: string;
+  title: string;
   description: string;
 }
 
@@ -94,10 +121,15 @@ export interface SlideElement {
   gridItems?: IconGridItem[];
   left?: SlideElement;
   right?: SlideElement;
+  companyCards?: CompanyCardEntry[];
+  skillTransfers?: SkillTransferEntry[];
+  careerVisions?: CareerVisionEntry[];
+  certifications?: string[];
 }
 
 export interface SlideData {
   title: string;
+  subtitle?: string;
   elements: SlideElement[];
 }
 
