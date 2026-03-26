@@ -16,7 +16,7 @@ export function buildPresentationPrompt(
 
 ## 必須コンテンツ（必ずスライドに含めること）
 1. **職務要約**: 経歴全体のサマリーを必ず含める（text または subtitle で冒頭に配置）
-2. **各職歴の内容**: 経歴書に記載されたすべての会社・役職・実績に必ず触れる。省略しない。timeline や bulletList で各社の具体的な業務内容・成果を漏れなく表現する
+2. **各職歴の内容**: 経歴書に記載されたすべての会社・役職・実績に必ず触れる。省略しない。timeline や bulletList で各社の具体的な業務内容・成果を漏れなく表現する。業務実績は1項目ずつ改行して記載し、1行に詰め込まない
 3. **数値実績**: 元テキストに含まれる数字（売上、人数、期間、%等）はすべて metric で強調する
 
 ## スライド構成ガイドライン
@@ -47,6 +47,7 @@ export function buildPresentationPrompt(
 - timeline: 経歴タイムライン（timeline 配列: {period, company, role, highlight}[]）
   - period例: "2018年4月〜2022年3月"
   - highlight: 1行の成果サマリー
+  - 各社の業務実績は改行して箇条書きで記載する（1行にまとめない）
 - skillBars: スキルバーチャート 4〜6個（skills 配列: {name, level}[]）
   - level: 1〜5の整数
 - iconGrid: アイコングリッド 3〜4個（gridItems 配列: {icon, label, description}[]）
