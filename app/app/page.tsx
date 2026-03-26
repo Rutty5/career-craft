@@ -82,21 +82,19 @@ export default function AppPage() {
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        throw new Error(
-          errData?.error || "エラーが発生しました (" + response.status + ")"
-        );
+        const errText = await response.text().catch(() => "");
+        let errorMessage = "エラーが発生しました (" + response.status + ")";
+        try {
+          const errData = JSON.parse(errText);
+          if (errData?.error) errorMessage = errData.error;
+        } catch {
+          if (errText) errorMessage = errText.slice(0, 200);
+        }
+        throw new Error(errorMessage);
       }
 
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        setResult((prev) => prev + chunk);
-      }
+      const text = await response.text();
+      setResult(text);
     } catch (err) {
       setError(
         err instanceof Error
