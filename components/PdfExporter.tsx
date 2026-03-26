@@ -25,12 +25,10 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
       // マークダウンをHTMLに変換（提出用フォーマット）
       const htmlContent = result
         .replace(/<!--.*?-->/gs, "")
-        // 末尾の改善ポイント解説などを除去（リライトモードの場合）
-        .replace(/---\s*\n[\s\S]*?改善ポイント[\s\S]*$/gm, "")
-        .replace(/---\s*\n[\s\S]*?補足[\s\S]*$/gm, "")
         // 水平線
         .replace(/^---$/gm, "<hr>")
         // 見出し変換
+        .replace(/^#### (.+)$/gm, '<h4></h4>')
         .replace(/^### (.+)$/gm, '<h3>$1</h3>')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>')
         .replace(/^# (.+)$/gm, '<h1>$1</h1>')
@@ -39,8 +37,6 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
         // リスト（箇条書き）
         .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // テーブル除去（添削モード用スコアテーブルなど）
-        .replace(/\|.*\|/g, "")
         // 改行処理
         .replace(/\n\n/g, '</p><p>')
         .replace(/\n/g, "<br>");
