@@ -200,7 +200,7 @@ function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     const achCount = card.achievements?.length || 1;
-    const rowH = Math.max(0.72, achCount * 0.17 + 0.38);
+    const rowH = Math.max(0.85, achCount * 0.22 + 0.42);
     const bgColor = i % 2 === 0 ? C.white : C.grayBg;
 
     slide.addShape(pptx.ShapeType.rect, {
@@ -230,11 +230,13 @@ function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
       fontSize: 6.5, fontFace: FONT, color: C.textLight,
     });
 
-    // 実績
-    const achText = (card.achievements || []).join("\n");
-    slide.addText(achText, {
+    // 実績（各項目を個別行で確実に改行）
+    const achRows = (card.achievements || []).map(function(ach) {
+      return { text: ach, options: { breakLine: true, fontSize: 7.5, fontFace: FONT, color: C.text } };
+    });
+    slide.addText(achRows as PptxGenJS.TextProps[], {
       x: CL + colW1 + 0.06, y: rowY + 0.05, w: colW2 - 0.12, h: rowH - 0.1,
-      fontSize: 7.5, fontFace: FONT, color: C.text, lineSpacing: 13, valign: "top",
+      lineSpacing: 14, valign: "top",
     });
 
     // スキル見出し
