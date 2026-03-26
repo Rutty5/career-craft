@@ -19,20 +19,23 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
       const { Document, Page, Text, View, StyleSheet, Font, pdf } =
         await import("@react-pdf/renderer");
 
-      // フォント登録（Google Fonts CDN）
+      // フォント登録（Google Fonts CDN - Noto Sans JP）
       Font.register({
         family: "NotoSansJP",
         fonts: [
           {
-            src: "https://fonts.gstatic.com/s/notosansjp/v53/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEi75g.ttf",
+            src: "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.ttf",
             fontWeight: 400,
           },
           {
-            src: "https://fonts.gstatic.com/s/notosansjp/v53/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFJUi75g.ttf",
+            src: "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-700-normal.ttf",
             fontWeight: 700,
           },
         ],
       });
+
+      // ハイフネーション無効化（日本語対応）
+      Font.registerHyphenationCallback((word: string) => [word]);
 
       const styles = StyleSheet.create({
         page: {
