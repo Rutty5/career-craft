@@ -200,7 +200,7 @@ function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     const achCount = card.achievements?.length || 1;
-    const rowH = Math.max(0.65, achCount * 0.16 + 0.32);
+    const rowH = Math.max(0.72, achCount * 0.17 + 0.38);
     const bgColor = i % 2 === 0 ? C.white : C.grayBg;
 
     slide.addShape(pptx.ShapeType.rect, {
@@ -243,13 +243,13 @@ function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
       fontSize: 8, fontFace: FONT, color: C.navy, bold: true,
     });
     slide.addText(card.skillDetail, {
-      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.21, w: colW3 - 0.12, h: rowH - 0.48,
+      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.21, w: colW3 - 0.12, h: Math.max(0.2, rowH - 0.5),
       fontSize: 6.5, fontFace: FONT, color: C.text, lineSpacing: 11, valign: "top",
     });
 
     // タグ
     let tagX = CL + colW1 + colW2 + 0.06;
-    const tagY2 = rowY + rowH - 0.22;
+    const tagY2 = rowY + rowH - 0.2;
     for (const tag of card.tags || []) {
       const tw = tag.length * 0.11 + 0.14;
       slide.addShape(pptx.ShapeType.roundRect, {
@@ -275,7 +275,7 @@ function renderSkillTransfers(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: Slide
 
   const cols = 2;
   const cardW = (CW - 0.12) / cols;
-  const cardH = 0.82;
+  const cardH = 0.92;
 
   for (let i = 0; i < transfers.length; i++) {
     const t = transfers[i];
@@ -311,7 +311,7 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
 
   if (certs.length > 0) {
     slide.addShape(pptx.ShapeType.roundRect, {
-      x: CL, y, w: CW, h: 0.5, fill: { color: C.navy }, rectRadius: 0.04,
+      x: CL, y, w: CW, h: Math.max(0.5, certs.length * 0.16 + 0.28), fill: { color: C.navy }, rectRadius: 0.04,
     });
     slide.addText("定量実績・資格", {
       x: CL + 0.12, y: y + 0.03, w: 2.0, h: 0.18,
@@ -319,10 +319,9 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
     });
     const certText = certs.map(function(c) { return "✓  " + c; }).join("\n");
     slide.addText(certText, {
-      x: CL + 0.12, y: y + 0.2, w: CW - 0.24, h: 0.26,
-      fontSize: 7.5, fontFace: FONT, color: C.white, lineSpacing: 12,
+      x: CL + 0.12, y: y + 0.2, w: CW - 0.24, h: Math.max(0.26, certs.length * 0.14), fontSize: 7.5, fontFace: FONT, color: C.white, lineSpacing: 12,
     });
-    y += 0.56;
+    y += Math.max(0.56, certs.length * 0.16 + 0.34);
   }
 
   if (visions.length === 0) return y;
@@ -331,7 +330,7 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
 
   for (let i = 0; i < visions.length; i++) {
     const v = visions[i];
-    const vy = y + i * 0.48;
+    const vy = y + i * 0.52;
     const dotColor = phaseColors[v.phase] || C.navy;
 
     slide.addShape(pptx.ShapeType.ellipse, {
@@ -352,7 +351,7 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
     });
   }
 
-  return y + visions.length * 0.48;
+  return y + visions.length * 0.52;
 }
 
 // 既存要素レンダラー（互換性）

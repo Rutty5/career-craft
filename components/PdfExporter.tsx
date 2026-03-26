@@ -28,6 +28,8 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
         // 末尾の改善ポイント解説などを除去（リライトモードの場合）
         .replace(/---\s*\n[\s\S]*?改善ポイント[\s\S]*$/gm, "")
         .replace(/---\s*\n[\s\S]*?補足[\s\S]*$/gm, "")
+        // 水平線
+        .replace(/^---$/gm, "<hr>")
         // 見出し変換
         .replace(/^### (.+)$/gm, '<h3>$1</h3>')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>')
