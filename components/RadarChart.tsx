@@ -14,9 +14,9 @@ const AXES = [
   { key: "emotion" as const, label: "感情設計", max: 15 },
 ];
 
-const SIZE = 300;
+const SIZE = 400;
 const CENTER = SIZE / 2;
-const RADIUS = 110;
+const RADIUS = 120;
 const LEVELS = 4;
 
 function polarToCartesian(
@@ -55,7 +55,7 @@ export default function RadarChart({ scores }: RadarChartProps) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full max-w-[280px]">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full max-w-[360px]">
         {/* グリッド */}
         {gridLines.map((points, i) => (
           <polygon
@@ -97,52 +97,48 @@ export default function RadarChart({ scores }: RadarChartProps) {
             key={i}
             cx={p.x}
             cy={p.y}
-            r="4"
+            r="5"
             fill="#c7924e"
             stroke="white"
             strokeWidth="2"
           />
         ))}
 
-        {/* ラベル */}
+        {/* ラベル + スコア（図形の外側に十分離して配置） */}
         {AXES.map((axis, i) => {
-          const p = polarToCartesian(i * angleStep, RADIUS + 28);
+          const labelPos = polarToCartesian(i * angleStep, RADIUS + 45);
+          const scorePos = polarToCartesian(i * angleStep, RADIUS + 65);
           return (
-            <text
-              key={i}
-              x={p.x}
-              y={p.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="text-[11px] font-bold fill-navy"
-            >
-              {axis.label}
-            </text>
-          );
-        })}
-
-        {/* スコア値 */}
-        {AXES.map((axis, i) => {
-          const p = polarToCartesian(i * angleStep, RADIUS + 42);
-          return (
-            <text
-              key={`score-${i}`}
-              x={p.x}
-              y={p.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="text-[10px] fill-gold font-bold"
-            >
-              {scores[axis.key]}/{axis.max}
-            </text>
+            <g key={i}>
+              <text
+                x={labelPos.x}
+                y={labelPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="font-bold fill-navy"
+                fontSize="16"
+              >
+                {axis.label}
+              </text>
+              <text
+                x={scorePos.x}
+                y={scorePos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-gold font-black"
+                fontSize="18"
+              >
+                {scores[axis.key]}/{axis.max}
+              </text>
+            </g>
           );
         })}
       </svg>
 
       {/* 総合スコア */}
-      <div className="mt-4 text-center">
-        <div className="text-4xl font-black text-navy">{scores.total}</div>
-        <div className="text-sm text-text-light font-medium">/ 100 点</div>
+      <div className="mt-6 text-center">
+        <div className="text-5xl font-black text-navy">{scores.total}</div>
+        <div className="text-lg text-text-light font-medium">/ 100 点</div>
       </div>
     </div>
   );
