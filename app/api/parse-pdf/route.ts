@@ -25,13 +25,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Dynamic import to avoid pdf-parse loading test files at module level
+    // Import pdf-parse/lib directly to avoid the test file loading issue on Vercel
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse");
+    const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const data = await pdfParse(buffer);
+    const data = await pdfParse(buffer, {});
 
     let text = data.text
       .replace(/\r\n/g, "\n")
