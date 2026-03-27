@@ -27,17 +27,24 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
         .replace(/<!--.*?-->/gs, "")
         // 水平線
         .replace(/^---$/gm, "<hr>")
-        // 見出し変換
+        // 見出し変換（【セクション名】をh1に変換）
         .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
         .replace(/^### (.+)$/gm, '<h3>$1</h3>')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>')
         .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // 【】で囲まれたセクション見出しをh2に変換
+        .replace(/^【(.+?)】$/gm, '<h2>【$1】</h2>')
         // 太字・斜体
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        // ■ で始まる行を会社情報ブロックとして処理
+        .replace(/^■ (.+)$/gm, '<div class="company-info">■ $1</div>')
+        // ◆ で始まる行を実績項目として処理
+        .replace(/^◆(.+)$/gm, '<div class="achievement">◆$1</div>')
         // リスト（箇条書き）
         .replace(/^- (.+)$/gm, '<li>$1</li>')
-        // 改行処理
+        // 連続する空行を1つの段落区切りに
+        .replace(/\n{3,}/g, '</p><p class="section-gap">')
         .replace(/\n\n/g, '</p><p>')
         .replace(/\n/g, "<br>");
 
@@ -121,13 +128,16 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
 
             /* 本文 */
             p {
-              margin: 0 0 6px;
+              margin: 0 0 4px;
               text-align: justify;
+            }
+            p.section-gap {
+              margin: 0 0 8px;
             }
 
             /* リスト */
             li {
-              margin: 0 0 2px;
+              margin: 0 0 1px;
               padding-left: 16px;
               list-style: none;
               text-indent: -12px;
@@ -141,6 +151,19 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
               font-weight: bold;
             }
 
+            /* 会社情報ブロック */
+            .company-info {
+              margin: 0 0 1px;
+              padding: 0;
+              font-weight: bold;
+            }
+
+            /* 実績項目 */
+            .achievement {
+              margin: 0 0 2px;
+              padding-left: 0;
+            }
+
             /* 職務経歴ブロック：途中でページを変えない */
             .job-block {
               page-break-inside: avoid;
@@ -150,7 +173,7 @@ export default function PdfExporter({ result, settings }: PdfExporterProps) {
             hr {
               border: none;
               border-top: 1px solid #ccc;
-              margin: 10px 0;
+              margin: 8px 0;
             }
 
             /* 印刷ボタン */

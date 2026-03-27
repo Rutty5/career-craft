@@ -1,6 +1,41 @@
 import { buildPresentationPrompt } from "@/lib/presentation-prompt";
 import type { PresentationRequest, PresentationData } from "@/lib/types";
 
+// ダブルチェック: メトリクスの空値を検出・修正
+function validateAndFixMetrics(data: PresentationData): PresentationData {
+  for (const slide of data.slides) {
+    for (const element of slide.elements) {
+      if (element.type === "metric" && element.metrics) {
+        element.metrics = element.metrics.filter(
+          (m) => m.value && m.value.trim() !== ""
+        );
+        // 空のメトリクスが除去された場合、最低限のデフォルトを追加
+        if (element.metrics.length === 0) {
+          console.warn("WARNING: All metrics were empty. Adding fallback.");
+        }
+        // value/labelの空白トリム
+        for (const m of element.metrics) {
+          m.value = (m.value || "").trim();
+          m.label = (m.label || "").trim();
+        }
+      }
+      // companyCardのachievements空チェック
+      if (element.type === "companyCard" && element.companyCards) {
+        for (const card of element.companyCards) {
+          if (!card.achievements || card.achievements.length === 0) {
+            console.warn(`WARNING: Company "${card.company}" has no achievements.`);
+          }
+          // 空の実績を除去
+          card.achievements = (card.achievements || []).filter(
+            (a) => a && a.trim() !== ""
+          );
+        }
+      }
+    }
+  }
+  return data;
+}
+
 export async function POST(request: Request) {
   let body: PresentationRequest;
   try {
@@ -43,7 +78,7 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
+          max_tokens: 8192,
           system,
           messages: [{ role: "user", content: user }],
         }),
@@ -108,6 +143,9 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // ★ ダブルチェック: メトリクス・実績の空値を検出・修正
+    presentationData = validateAndFixMetrics(presentationData);
 
     return Response.json(presentationData);
   } catch (error) {

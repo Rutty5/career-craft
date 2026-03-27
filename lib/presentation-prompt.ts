@@ -20,6 +20,17 @@ export function buildPresentationPrompt(
 - **業務実績は絶対に削除・省略しない。スペース調整のために内容をカットすることは禁止**
 - 内容が多い場合は3枚目のスライドを追加してよい（内容削除よりスライド追加を優先）
 
+## ★★★ メトリクス（metric）に関する絶対ルール ★★★
+メトリクスはプレゼンシートの最重要要素。**空欄や空文字は絶対禁止**。
+各metricのvalueとlabelは必ず具体的な内容を入れること。
+
+valueの書き方ルール:
+- 数値 + 単位を組み合わせる（例: "4業界", "15年", "20名+", "1,822億円"）
+- 数値が不明な場合は経歴から推定できる情報を使う
+- **空文字""は絶対NG。必ず値を入れる**
+
+生成後セルフチェック: metricsの全valueが空文字でないか確認し、空文字があれば修正してから出力すること。
+
 ## 求人票がある場合の最重要ルール
 求人票が提供されている場合、プレゼンシートは**その求人企業の採用担当者に向けたPR資料**として作成する。
 - スキル転用（skillTransfer）は、求人票に記載された「求める人材像」「必要スキル」「業務内容」に直接対応させる
@@ -36,6 +47,9 @@ export function buildPresentationPrompt(
 必須要素:
 1. **subtitle**: キャッチコピー（経歴の強みを1行で。例: "4業界12年の経験で培った自律的行動と汎用的スキル"）
 2. **metric**: キーメトリクス 3〜4個（経験業界数、最大組織規模、社会人経験年数、最大売上規模など）
+   各metricは以下の形式:
+   { "value": "4業界", "label": "業界経験" }
+   ※ valueは必ず具体的な数値+単位。空文字禁止。
 3. **companyCard**: 各社の詳細カード（全社分、省略しない）
    - industry: 業界タグ（"製造", "IT", "小売", "介護", "金融" 等）
    - company: 会社名
@@ -76,15 +90,20 @@ export function buildPresentationPrompt(
   "coverSubtitle": "氏名",
   "slides": [
     {
-      "title": "スライド1タイトル",
+      "title": "経歴サマリー＋職務実績",
       "subtitle": "キャッチコピー",
       "elements": [
-        { "type": "metric", "metrics": [...] },
+        { "type": "metric", "metrics": [
+          { "value": "5業界", "label": "業界経験" },
+          { "value": "20年", "label": "社会人経験" },
+          { "value": "7,736名", "label": "最大組織規模" },
+          { "value": "1,822億円", "label": "最大売上規模" }
+        ]},
         { "type": "companyCard", "companyCards": [...] }
       ]
     },
     {
-      "title": "スライド2タイトル",
+      "title": "御社で活かせる強み＋即戦力ポイント",
       "subtitle": "キャッチコピー",
       "elements": [
         { "type": "skillTransfer", "skillTransfers": [...] },
@@ -93,6 +112,12 @@ export function buildPresentationPrompt(
     }
   ]
 }
+
+## 出力前の最終チェックリスト
+1. metricsのvalueがすべて非空文字であること
+2. 全ての会社がcompanyCardsに含まれていること
+3. achievementsが元テキストの実績を省略していないこと
+4. skillTransferが3個以上あること
 
 JSONのみを出力してください。`;
 
