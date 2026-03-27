@@ -27,6 +27,7 @@ const C = {
 
 const FONT = "Meiryo";
 const SLIDE_W = 10;
+const SLIDE_MAX_Y = 7.15; // スライド下端の余白を確保
 const HEADER_H = 0.55;
 const CL = 0.4;
 const CW = SLIDE_W - CL * 2;
@@ -87,31 +88,34 @@ function renderCoverSlide(pptx: PptxGenJS, data: PresentationData) {
   slide.addShape(pptx.ShapeType.rect, { x: 3.0, y: 4.6, w: 4.0, h: 0.03, fill: { color: C.gold } });
 }
 
-function renderContentSlide(pptx: PptxGenJS, slideData: SlideData) {
-  const slide = pptx.addSlide();
+// スライドヘッダーバーを描画する共通関数
+function addSlideHeader(pptx: PptxGenJS, slide: PptxGenJS.Slide, title: string) {
   slide.background = { color: C.warmBg };
-
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: SLIDE_W, h: HEADER_H, fill: { color: C.navy } });
   slide.addShape(pptx.ShapeType.rect, { x: 0, y: HEADER_H, w: SLIDE_W, h: 0.03, fill: { color: C.gold } });
-
-  slide.addText(slideData.title, {
+  slide.addText(title, {
     x: CL, y: 0.06, w: CW, h: 0.44,
     fontSize: 16, fontFace: FONT, color: C.white, bold: true,
   });
+}
+
+function renderContentSlide(pptx: PptxGenJS, slideData: SlideData) {
+  const slide = pptx.addSlide();
+  addSlideHeader(pptx, slide, slideData.title);
 
   let currentY = HEADER_H + 0.15;
 
   if (slideData.subtitle) {
     slide.addText(slideData.subtitle, {
-      x: CL, y: currentY, w: CW, h: 0.3,
+      x: CL, y: currentY, w: CW, h: 0.28,
       fontSize: 10, fontFace: FONT, color: C.text, italic: true,
     });
-    currentY += 0.32;
+    currentY += 0.3;
   }
 
   for (const element of slideData.elements) {
     currentY = renderElement(pptx, slide, element, currentY);
-    currentY += 0.08;
+    currentY += 0.06;
   }
 }
 
@@ -125,16 +129,16 @@ function renderElement(
     case "careerVision": return renderCareerVision(pptx, slide, element, y);
     case "subtitle":
       slide.addText(element.text || "", {
-        x: CL, y, w: CW, h: 0.3,
+        x: CL, y, w: CW, h: 0.28,
         fontSize: 11, fontFace: FONT, color: C.navyLight, bold: true,
       });
-      return y + 0.3;
+      return y + 0.28;
     case "text":
       slide.addText(element.text || "", {
-        x: CL, y, w: CW, h: 0.3,
+        x: CL, y, w: CW, h: 0.26,
         fontSize: 9, fontFace: FONT, color: C.text,
       });
-      return y + 0.3;
+      return y + 0.26;
     case "bulletList": return renderBulletList(slide, element, y);
     case "skillBars": return renderSkillBars(pptx, slide, element, y);
     case "iconGrid": return renderIconGrid(pptx, slide, element, y);
@@ -157,118 +161,136 @@ function renderMetrics(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement
     const cw = itemW - pad * 2;
 
     slide.addShape(pptx.ShapeType.roundRect, {
-      x: cx, y, w: cw, h: 0.62,
+      x: cx, y, w: cw, h: 0.58,
       fill: { color: C.white }, line: { color: C.grayBorder, width: 0.5 }, rectRadius: 0.04,
     });
     slide.addText(m.value, {
-      x: cx, y: y + 0.04, w: cw, h: 0.32,
-      fontSize: 18, fontFace: FONT, color: C.navy, bold: true, align: "center",
+      x: cx, y: y + 0.03, w: cw, h: 0.3,
+      fontSize: 17, fontFace: FONT, color: C.navy, bold: true, align: "center",
     });
     slide.addText(m.label, {
-      x: cx + 0.04, y: y + 0.34, w: cw - 0.08, h: 0.22,
-      fontSize: 7.5, fontFace: FONT, color: C.textLight, align: "center",
+      x: cx + 0.04, y: y + 0.32, w: cw - 0.08, h: 0.2,
+      fontSize: 7, fontFace: FONT, color: C.textLight, align: "center",
     });
   }
-  return y + 0.7;
+  return y + 0.64;
+}
+
+// テーブルヘッダーを描画
+function renderTableHeader(
+  pptx: PptxGenJS, slide: PptxGenJS.Slide,
+  y: number, colW1: number, colW2: number, colW3: number
+): number {
+  slide.addShape(pptx.ShapeType.rect, { x: CL, y, w: CW, h: 0.24, fill: { color: C.navy } });
+  slide.addText("業界・規模", {
+    x: CL, y, w: colW1, h: 0.24,
+    fontSize: 7, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+  });
+  slide.addText("具体的な行動と実績", {
+    x: CL + colW1, y, w: colW2, h: 0.24,
+    fontSize: 7, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+  });
+  slide.addText("身につけた能力（採用メリット）", {
+    x: CL + colW1 + colW2, y, w: colW3, h: 0.24,
+    fontSize: 7, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+  });
+  return y + 0.24;
 }
 
 function renderCompanyCards(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
   const cards = el.companyCards || [];
   if (cards.length === 0) return y;
 
-  const colW1 = 1.8;
-  const colW2 = 3.6;
+  const colW1 = 1.7;
+  const colW2 = 3.8;
   const colW3 = CW - colW1 - colW2;
 
-  // ヘッダー
-  slide.addShape(pptx.ShapeType.rect, { x: CL, y, w: CW, h: 0.26, fill: { color: C.navy } });
-  slide.addText("業界・規模", {
-    x: CL, y, w: colW1, h: 0.26,
-    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
-  });
-  slide.addText("具体的な行動と実績", {
-    x: CL + colW1, y, w: colW2, h: 0.26,
-    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
-  });
-  slide.addText("身につけた能力（採用メリット）", {
-    x: CL + colW1 + colW2, y, w: colW3, h: 0.26,
-    fontSize: 7.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
-  });
-
-  let rowY = y + 0.26;
+  let currentSlide = slide;
+  let rowY = renderTableHeader(pptx, currentSlide, y, colW1, colW2, colW3);
 
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     const achCount = card.achievements?.length || 1;
-    const rowH = Math.max(0.85, achCount * 0.22 + 0.42);
+    // 各実績行: fontSize 7 + lineSpacing 13 ≒ 0.17インチ/行
+    const rowH = Math.max(0.72, achCount * 0.18 + 0.36);
+
+    // スライド溢れチェック → 新スライドに分割
+    if (rowY + rowH > SLIDE_MAX_Y && i > 0) {
+      currentSlide = pptx.addSlide();
+      addSlideHeader(pptx, currentSlide, "経歴サマリー＋職務実績（続き）");
+      rowY = HEADER_H + 0.15;
+      rowY = renderTableHeader(pptx, currentSlide, rowY, colW1, colW2, colW3);
+    }
+
     const bgColor = i % 2 === 0 ? C.white : C.grayBg;
 
-    slide.addShape(pptx.ShapeType.rect, {
+    currentSlide.addShape(pptx.ShapeType.rect, {
       x: CL, y: rowY, w: CW, h: rowH,
       fill: { color: bgColor }, line: { color: C.grayBorder, width: 0.3 },
     });
 
     // 業界タグ
     const tagColor = getIndustryColor(card.industry);
-    const tagW = Math.min(card.industry.length * 0.15 + 0.18, 1.1);
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: CL + 0.06, y: rowY + 0.05, w: tagW, h: 0.18,
+    const tagW = Math.min(card.industry.length * 0.14 + 0.16, 1.0);
+    currentSlide.addShape(pptx.ShapeType.roundRect, {
+      x: CL + 0.05, y: rowY + 0.04, w: tagW, h: 0.17,
       fill: { color: tagColor }, rectRadius: 0.03,
     });
-    slide.addText(card.industry, {
-      x: CL + 0.06, y: rowY + 0.05, w: tagW, h: 0.18,
-      fontSize: 6.5, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
+    currentSlide.addText(card.industry, {
+      x: CL + 0.05, y: rowY + 0.04, w: tagW, h: 0.17,
+      fontSize: 6, fontFace: FONT, color: C.white, bold: true, align: "center", valign: "middle",
     });
 
     // 会社名
-    slide.addText(card.company, {
-      x: CL + 0.06, y: rowY + 0.25, w: colW1 - 0.12, h: 0.16,
-      fontSize: 8.5, fontFace: FONT, color: C.navy, bold: true,
+    currentSlide.addText(card.company, {
+      x: CL + 0.05, y: rowY + 0.23, w: colW1 - 0.1, h: 0.15,
+      fontSize: 8, fontFace: FONT, color: C.navy, bold: true,
     });
-    slide.addText(card.scale + " | " + card.period, {
-      x: CL + 0.06, y: rowY + 0.4, w: colW1 - 0.12, h: 0.14,
-      fontSize: 6.5, fontFace: FONT, color: C.textLight,
+    currentSlide.addText(card.scale + " | " + card.period, {
+      x: CL + 0.05, y: rowY + 0.37, w: colW1 - 0.1, h: 0.13,
+      fontSize: 6, fontFace: FONT, color: C.textLight,
     });
 
     // 実績（各項目を個別行で確実に改行）
     const achRows = (card.achievements || []).map(function(ach) {
-      return { text: ach, options: { breakLine: true, fontSize: 7.5, fontFace: FONT, color: C.text } };
+      return { text: ach, options: { breakLine: true, fontSize: 7, fontFace: FONT, color: C.text } };
     });
-    slide.addText(achRows as PptxGenJS.TextProps[], {
-      x: CL + colW1 + 0.06, y: rowY + 0.05, w: colW2 - 0.12, h: rowH - 0.1,
-      lineSpacing: 14, valign: "top",
+    currentSlide.addText(achRows as PptxGenJS.TextProps[], {
+      x: CL + colW1 + 0.05, y: rowY + 0.04, w: colW2 - 0.1, h: rowH - 0.08,
+      lineSpacing: 13, valign: "top",
     });
 
     // スキル見出し
-    slide.addText(card.acquiredSkill, {
-      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.05, w: colW3 - 0.12, h: 0.16,
-      fontSize: 8, fontFace: FONT, color: C.navy, bold: true,
+    currentSlide.addText(card.acquiredSkill, {
+      x: CL + colW1 + colW2 + 0.05, y: rowY + 0.04, w: colW3 - 0.1, h: 0.15,
+      fontSize: 7.5, fontFace: FONT, color: C.navy, bold: true,
     });
-    slide.addText(card.skillDetail, {
-      x: CL + colW1 + colW2 + 0.06, y: rowY + 0.21, w: colW3 - 0.12, h: Math.max(0.2, rowH - 0.5),
-      fontSize: 6.5, fontFace: FONT, color: C.text, lineSpacing: 11, valign: "top",
+    currentSlide.addText(card.skillDetail, {
+      x: CL + colW1 + colW2 + 0.05, y: rowY + 0.19, w: colW3 - 0.1, h: Math.max(0.18, rowH - 0.44),
+      fontSize: 6, fontFace: FONT, color: C.text, lineSpacing: 10, valign: "top",
     });
 
     // タグ
-    let tagX = CL + colW1 + colW2 + 0.06;
-    const tagY2 = rowY + rowH - 0.2;
+    let tagX = CL + colW1 + colW2 + 0.05;
+    const tagY2 = rowY + rowH - 0.18;
     for (const tag of card.tags || []) {
-      const tw = tag.length * 0.11 + 0.14;
-      slide.addShape(pptx.ShapeType.roundRect, {
-        x: tagX, y: tagY2, w: tw, h: 0.16,
+      const tw = tag.length * 0.1 + 0.12;
+      if (tagX + tw > CL + CW - 0.05) break; // はみ出し防止
+      currentSlide.addShape(pptx.ShapeType.roundRect, {
+        x: tagX, y: tagY2, w: tw, h: 0.15,
         fill: { color: C.warmBg }, line: { color: C.navyLight, width: 0.5 }, rectRadius: 0.03,
       });
-      slide.addText(tag, {
-        x: tagX, y: tagY2, w: tw, h: 0.16,
-        fontSize: 6, fontFace: FONT, color: C.navyLight, bold: true, align: "center", valign: "middle",
+      currentSlide.addText(tag, {
+        x: tagX, y: tagY2, w: tw, h: 0.15,
+        fontSize: 5.5, fontFace: FONT, color: C.navyLight, bold: true, align: "center", valign: "middle",
       });
-      tagX += tw + 0.05;
+      tagX += tw + 0.04;
     }
 
     rowY += rowH;
   }
 
-  return rowY + 0.04;
+  return rowY + 0.03;
 }
 
 function renderSkillTransfers(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
@@ -276,15 +298,15 @@ function renderSkillTransfers(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: Slide
   if (transfers.length === 0) return y;
 
   const cols = 2;
-  const cardW = (CW - 0.12) / cols;
-  const cardH = 0.92;
+  const cardW = (CW - 0.1) / cols;
+  const cardH = 0.88;
 
   for (let i = 0; i < transfers.length; i++) {
     const t = transfers[i];
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const cx = CL + col * (cardW + 0.12);
-    const cy = y + row * (cardH + 0.06);
+    const cx = CL + col * (cardW + 0.1);
+    const cy = y + row * (cardH + 0.05);
 
     slide.addShape(pptx.ShapeType.roundRect, {
       x: cx, y: cy, w: cardW, h: cardH,
@@ -295,16 +317,16 @@ function renderSkillTransfers(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: Slide
     });
 
     slide.addText(t.icon + "  " + t.fromSkill + " → " + t.toSkill, {
-      x: cx + 0.14, y: cy + 0.06, w: cardW - 0.2, h: 0.22,
-      fontSize: 9, fontFace: FONT, color: C.navy, bold: true,
+      x: cx + 0.14, y: cy + 0.06, w: cardW - 0.2, h: 0.2,
+      fontSize: 8.5, fontFace: FONT, color: C.navy, bold: true,
     });
     slide.addText(t.description, {
-      x: cx + 0.14, y: cy + 0.3, w: cardW - 0.2, h: cardH - 0.38,
+      x: cx + 0.14, y: cy + 0.28, w: cardW - 0.2, h: cardH - 0.34,
       fontSize: 7, fontFace: FONT, color: C.text, lineSpacing: 11, valign: "top",
     });
   }
 
-  return y + Math.ceil(transfers.length / cols) * (cardH + 0.06);
+  return y + Math.ceil(transfers.length / cols) * (cardH + 0.05);
 }
 
 function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideElement, y: number): number {
@@ -312,18 +334,20 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
   const certs = el.certifications || [];
 
   if (certs.length > 0) {
+    const certH = Math.max(0.46, certs.length * 0.15 + 0.24);
     slide.addShape(pptx.ShapeType.roundRect, {
-      x: CL, y, w: CW, h: Math.max(0.5, certs.length * 0.16 + 0.28), fill: { color: C.navy }, rectRadius: 0.04,
+      x: CL, y, w: CW, h: certH, fill: { color: C.navy }, rectRadius: 0.04,
     });
     slide.addText("定量実績・資格", {
-      x: CL + 0.12, y: y + 0.03, w: 2.0, h: 0.18,
-      fontSize: 8.5, fontFace: FONT, color: C.gold, bold: true,
+      x: CL + 0.12, y: y + 0.03, w: 2.0, h: 0.16,
+      fontSize: 8, fontFace: FONT, color: C.gold, bold: true,
     });
     const certText = certs.map(function(c) { return "✓  " + c; }).join("\n");
     slide.addText(certText, {
-      x: CL + 0.12, y: y + 0.2, w: CW - 0.24, h: Math.max(0.26, certs.length * 0.14), fontSize: 7.5, fontFace: FONT, color: C.white, lineSpacing: 12,
+      x: CL + 0.12, y: y + 0.18, w: CW - 0.24, h: Math.max(0.22, certs.length * 0.13),
+      fontSize: 7, fontFace: FONT, color: C.white, lineSpacing: 11,
     });
-    y += Math.max(0.56, certs.length * 0.16 + 0.34);
+    y += certH + 0.06;
   }
 
   if (visions.length === 0) return y;
@@ -332,28 +356,28 @@ function renderCareerVision(pptx: PptxGenJS, slide: PptxGenJS.Slide, el: SlideEl
 
   for (let i = 0; i < visions.length; i++) {
     const v = visions[i];
-    const vy = y + i * 0.52;
+    const vy = y + i * 0.48;
     const dotColor = phaseColors[v.phase] || C.navy;
 
     slide.addShape(pptx.ShapeType.ellipse, {
-      x: CL + 0.08, y: vy + 0.05, w: 0.12, h: 0.12, fill: { color: dotColor },
+      x: CL + 0.08, y: vy + 0.04, w: 0.11, h: 0.11, fill: { color: dotColor },
     });
     if (i < visions.length - 1) {
       slide.addShape(pptx.ShapeType.rect, {
-        x: CL + 0.125, y: vy + 0.17, w: 0.025, h: 0.35, fill: { color: C.grayBorder },
+        x: CL + 0.12, y: vy + 0.15, w: 0.025, h: 0.33, fill: { color: C.grayBorder },
       });
     }
     slide.addText(v.phase + ": " + v.title, {
-      x: CL + 0.3, y: vy + 0.01, w: CW - 0.4, h: 0.2,
-      fontSize: 9, fontFace: FONT, color: C.navy, bold: true,
+      x: CL + 0.28, y: vy + 0.01, w: CW - 0.36, h: 0.18,
+      fontSize: 8.5, fontFace: FONT, color: C.navy, bold: true,
     });
     slide.addText(v.description, {
-      x: CL + 0.3, y: vy + 0.2, w: CW - 0.4, h: 0.24,
-      fontSize: 7, fontFace: FONT, color: C.text, lineSpacing: 11,
+      x: CL + 0.28, y: vy + 0.18, w: CW - 0.36, h: 0.22,
+      fontSize: 7, fontFace: FONT, color: C.text, lineSpacing: 10,
     });
   }
 
-  return y + visions.length * 0.52;
+  return y + visions.length * 0.48;
 }
 
 // 既存要素レンダラー（互換性）
